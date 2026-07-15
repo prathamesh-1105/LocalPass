@@ -24,7 +24,7 @@
       [
         "expo-router",
         {
-          "origin": "https://replit.com/"
+          "origin": "https://localpass-omega.vercel.app/"
         }
       ],
       "expo-font",
