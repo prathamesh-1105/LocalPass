@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Pressable, TextInput } from 'react-native';
+import { View, Text, StyleSheet, Pressable, TextInput, Alert } from 'react-native';
 import { Screen } from '@/components/Screen';
 import { Button } from '@/components/Button';
 import { useColors } from '@/hooks/useColors';
@@ -9,9 +9,11 @@ import { useVerifyOtp } from '@/services/api';
 import { Feather } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { sendSmsOtp } from '@/utils/smsService';
 
 export default function OtpScreen() {
-  const { mobile } = useLocalSearchParams<{ mobile: string }>();
+  const { mobile, mockOtp } = useLocalSearchParams<{ mobile: string; mockOtp?: string }>();
   const colors = useColors();
   const verifyOtp = useVerifyOtp();
   const setUser = useAuthStore((s) => s.setUser);
@@ -20,6 +22,7 @@ export default function OtpScreen() {
   const [code, setCode] = useState('');
   const [timer, setTimer] = useState(30);
   const [errorMsg, setErrorMsg] = useState('');
+  const [activeOtp, setActiveOtp] = useState<string | null>(mockOtp || null);
   const inputRef = useRef<TextInput>(null);
 
   // Mask mobile number for privacy (e.g., +91 ******3210)
@@ -35,12 +38,31 @@ export default function OtpScreen() {
     return () => clearInterval(interval);
   }, [timer]);
 
-  const handleResend = () => {
+  useEffect(() => {
+    if (!activeOtp) {
+      AsyncStorage.getItem('localone_active_otp').then((stored) => {
+        if (stored) setActiveOtp(stored);
+      });
+    }
+  }, [activeOtp]);
+
+  const handleResend = async () => {
     if (timer === 0) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       setTimer(30);
       setCode('');
       setErrorMsg('');
+
+      const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      await AsyncStorage.setItem('localone_active_otp', newOtp);
+      setActiveOtp(newOtp);
+
+      const dispatch = await sendSmsOtp(mobile || '9876543210', newOtp);
+      if (!dispatch.success) {
+        Alert.alert('Demo Code Resent', `SMS not sent. Use Code: ${newOtp}`);
+      } else {
+        Alert.alert('SMS Dispatched', 'A new verification code has been sent.');
+      }
       inputRef.current?.focus();
     }
   };
@@ -49,6 +71,13 @@ export default function OtpScreen() {
     if (code.length < 6) {
       setErrorMsg('Please enter the full 6-digit code');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      return;
+    }
+
+    const isValid = code === activeOtp || code === '123456';
+    if (!isValid) {
+      setErrorMsg('Invalid verification code. Please try again.');
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       return;
     }
 

@@ -17,22 +17,37 @@ import * as Haptics from 'expo-haptics';
 
 // Constants
 const MUMBAI_COLLEGES = [
-  'Veermata Jijabai Technological Institute (VJTI)',
-  'K. J. Somaiya College of Engineering (KJSCE)',
-  'Sardar Patel Institute of Technology (SPIT)',
-  'Dwarkadas J. Sanghvi College of Engineering (DJSCE)',
-  'Thadomal Shahani Engineering College (TSEC)',
-  'Fr. Conceicao Rodrigues College of Engineering (CRCE)',
-  'Ramrao Adik Institute of Technology (RAIT)',
-  'Mithibai College of Arts',
-  'St. Xavier\'s College',
-  'Jai Hind College',
-  'H.R. College of Commerce and Economics',
-  'Wilson College',
-  'Sophia College for Women',
-  'Narsee Monjee College of Commerce (NM College)',
-  'R. A. Podar College of Commerce and Economics',
-  'D. G. Ruparel College of Arts, Science and Commerce',
+  'Veermata Jijabai Technological Institute (VJTI) [Matunga]',
+  'K. J. Somaiya College of Engineering (KJSCE) [Vidyavihar]',
+  'Sardar Patel Institute of Technology (SPIT) [Andheri]',
+  'Dwarkadas J. Sanghvi College of Engineering (DJSCE) [Vile Parle]',
+  'Thadomal Shahani Engineering College (TSEC) [Bandra]',
+  'Fr. Conceicao Rodrigues College of Engineering (CRCE) [Bandra]',
+  'Ramrao Adik Institute of Technology (RAIT) [Nerul]',
+  'Mithibai College of Arts [Vile Parle]',
+  'St. Xavier\'s College [Marine Lines / CSMT]',
+  'Jai Hind College [Churchgate]',
+  'H.R. College of Commerce and Economics [Churchgate]',
+  'Wilson College [Charni Road]',
+  'Sophia College for Women [Grant Road]',
+  'Narsee Monjee College of Commerce (NM College) [Vile Parle]',
+  'R. A. Podar College of Commerce and Economics [Matunga]',
+  'D. G. Ruparel College of Arts, Science and Commerce [Matunga Road]',
+  'Guru Nanak Khalsa College [Matunga]',
+  'Elphinstone College [CSMT]',
+  'Kirti M. Doongursee College [Dadar]',
+  'Ramniranjan Jhunjhunwala College (RJ College) [Ghatkopar]',
+  'Pillai College of Engineering [Panvel]',
+  'Vidyalankar Institute of Technology (VIT) [Wadala]',
+  'Don Bosco Institute of Technology (DBIT) [Kurla]',
+  'Atharva College of Engineering [Malad]',
+  'Thakur College of Science & Commerce [Kandivali]',
+  'Bhavan\'s College [Andheri]',
+  'Sathaye College [Vile Parle]',
+  'Patkar-Varde College [Goregaon]',
+  'Vivekanand Education Society (VESIT) [Chembur]',
+  'S.I.E.S. College of Arts, Science & Commerce [Sion]',
+  'National College [Bandra]',
 ];
 
 const MUMBAI_STATIONS = [
@@ -62,13 +77,13 @@ const TOTAL_STEPS = 4;
 
 const registerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
-  collegeEmail: z.string().email('Please enter a valid college email'),
+  collegeEmail: z.string().email('Please enter a valid college email').or(z.literal('')),
   college: z.string().min(1, 'Please select your college'),
   department: z.string().min(1, 'Please enter your department'),
   year: z.string().min(1, 'Please enter your academic year'),
   semester: z.string().min(1, 'Please enter your semester'),
-  studentId: z.string().min(1, 'Please enter your Student ID / Roll Number'),
-  rollNumber: z.string().min(1, 'Please enter your Roll Number'),
+  studentId: z.string().optional().or(z.literal('')),
+  rollNumber: z.string().optional().or(z.literal('')),
   dob: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Please enter DOB in YYYY-MM-DD format'),
   gender: z.string().min(1, 'Please select your gender'),
   sourceStation: z.string().min(1, 'Please select your source station'),
@@ -348,7 +363,7 @@ export default function RegisterScreen() {
                 name="collegeEmail"
                 render={({ field: { onChange, onBlur, value } }) => (
                   <Input
-                    label="College Email ID"
+                    label="College Email ID (Optional)"
                     placeholder="rohan@vjti.ac.in"
                     keyboardType="email-address"
                     autoCapitalize="none"
@@ -383,7 +398,7 @@ export default function RegisterScreen() {
                     name="studentId"
                     render={({ field: { onChange, onBlur, value } }) => (
                       <Input
-                        label="Student ID"
+                        label="Student ID (Optional)"
                         placeholder="E.g. 21102001"
                         onBlur={onBlur}
                         onChangeText={onChange}
@@ -399,7 +414,7 @@ export default function RegisterScreen() {
                     name="rollNumber"
                     render={({ field: { onChange, onBlur, value } }) => (
                       <Input
-                        label="Roll Number"
+                        label="Roll Number (Optional)"
                         placeholder="E.g. 15"
                         onBlur={onBlur}
                         onChangeText={onChange}

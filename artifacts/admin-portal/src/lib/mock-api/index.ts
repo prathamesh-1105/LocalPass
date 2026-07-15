@@ -8,6 +8,69 @@ let applications = [...mockApplications];
 let students = [...mockStudents];
 let notifications = [...mockNotifications];
 
+const getStoredApplications = (): any[] => {
+  if (typeof window !== 'undefined') {
+    const stored = localStorage.getItem('localone_applications');
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  }
+  return [];
+};
+
+const getStoredStudents = (): any[] => {
+  if (typeof window !== 'undefined') {
+    const stored = localStorage.getItem('localone_students');
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  }
+  return [];
+};
+
+const mapMobileToAdminApp = (app: any): any => {
+  const parts = app.travelType.split(' - ');
+  const validity = parts[0] || 'Second Class';
+  const travelType = parts[1] || 'Monthly';
+  
+  return {
+    id: app.id,
+    studentId: app.userId,
+    applicationNumber: `APP-${new Date(app.submittedAt).getFullYear()}-${app.id.slice(-4).toUpperCase()}`,
+    submittedDate: app.submittedAt,
+    status: app.status === 'Submitted' ? 'Pending' : 
+            app.status === 'Completed' ? 'Approved' : app.status,
+    sourceStation: app.sourceStation,
+    destinationStation: app.destinationStation,
+    travelType: travelType.includes('Monthly') ? 'Monthly' : 'Quarterly',
+    validity: validity.includes('First') ? 'First Class' : 'Second Class',
+    remarks: app.rejectionReason,
+    documents: [
+      { id: 'd1', name: 'college_id.jpg', type: 'ID', status: 'Verified' },
+      { id: 'd2', name: 'bonafide.pdf', type: 'Bonafide', status: 'Pending' },
+      { id: 'd3', name: 'photo.jpg', type: 'Photo', status: 'Verified' }
+    ],
+    history: app.timeline ? app.timeline.map((t: any, idx: number) => ({
+      id: `h-${idx}-${t.timestamp}`,
+      status: t.status === 'Submitted' ? 'Pending' : t.status,
+      date: t.timestamp,
+      remarks: t.note
+    })) : []
+  };
+};
+
+const getApplicationsList = (): any[] => {
+  const custom = getStoredApplications().map(mapMobileToAdminApp);
+  const filteredStatic = mockApplications.filter(staticApp => !custom.some(c => c.id === staticApp.id));
+  return [...custom, ...filteredStatic];
+};
+
+const getStudentsList = (): any[] => {
+  const custom = getStoredStudents();
+  const filteredStatic = mockStudents.filter(staticStudent => !custom.some(c => c.id === staticStudent.id));
+  return [...custom, ...filteredStatic];
+};
+
 export const api = {
   // Auth
   async login(username: string, password: string): Promise<{ user: User; token: string }> {
@@ -30,23 +93,26 @@ export const api = {
   // Dashboard Stats
   async getDashboardStats() {
     await delay(600);
-    const pending = applications.filter(a => ['Pending', 'Under Review', 'College Verification'].includes(a.status)).length;
-    const approved = applications.filter(a => a.status === 'Approved').length;
-    const rejected = applications.filter(a => a.status === 'Rejected').length;
+    const list = getApplicationsList();
+    const stList = getStudentsList();
+    const pending = list.filter(a => ['Pending', 'Under Review', 'College Verification'].includes(a.status)).length;
+    const approved = list.filter(a => a.status === 'Approved').length;
+    const rejected = list.filter(a => a.status === 'Rejected').length;
     
     return {
       pending,
       approved,
       rejected,
-      totalStudents: students.length,
-      recentApplications: applications.slice(0, 5)
+      totalStudents: stList.length,
+      recentApplications: list.slice(0, 5)
     };
   },
 
   // Applications
   async getApplications(filters?: { status?: string; search?: string }): Promise<Application[]> {
     await delay(800);
-    let result = [...applications];
+    let result = getApplicationsList();
+    const stList = getStudentsList();
     
     if (filters?.status && filters.status !== 'All') {
       if (filters.status === 'Pending') {
@@ -60,7 +126,7 @@ export const api = {
       const search = filters.search.toLowerCase();
       result = result.filter(a => 
         a.applicationNumber.toLowerCase().includes(search) || 
-        students.find(s => s.id === a.studentId)?.name.toLowerCase().includes(search)
+        stList.find(s => s.id === a.studentId)?.name.toLowerCase().includes(search)
       );
     }
     
@@ -69,13 +135,38 @@ export const api = {
 
   async getApplication(id: string): Promise<Application> {
     await delay(500);
-    const app = applications.find(a => a.id === id);
+    const list = getApplicationsList();
+    const app = list.find(a => a.id === id);
     if (!app) throw new Error('Application not found');
     return app;
   },
 
   async updateApplicationStatus(id: string, status: ApplicationStatus, remarks?: string): Promise<Application> {
     await delay(800);
+    
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('localone_applications');
+      if (stored) {
+        const list = JSON.parse(stored) as any[];
+        const index = list.findIndex(a => a.id === id);
+        if (index !== -1) {
+          const mobileStatus = status === 'Pending' ? 'Submitted' : status;
+          list[index] = {
+            ...list[index],
+            status: mobileStatus,
+            rejectionReason: status === 'Rejected' ? remarks : list[index].rejectionReason,
+            updatedAt: new Date().toISOString(),
+            timeline: [
+              ...list[index].timeline,
+              { status: mobileStatus, timestamp: new Date().toISOString(), note: remarks }
+            ]
+          };
+          localStorage.setItem('localone_applications', JSON.stringify(list));
+          return mapMobileToAdminApp(list[index]);
+        }
+      }
+    }
+
     const index = applications.findIndex(a => a.id === id);
     if (index === -1) throw new Error('Application not found');
     
@@ -96,6 +187,28 @@ export const api = {
 
   async addApplicationRemarks(id: string, remarks: string): Promise<Application> {
     await delay(500);
+    
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('localone_applications');
+      if (stored) {
+        const list = JSON.parse(stored) as any[];
+        const index = list.findIndex(a => a.id === id);
+        if (index !== -1) {
+          list[index] = {
+            ...list[index],
+            rejectionReason: remarks,
+            updatedAt: new Date().toISOString(),
+            timeline: [
+              ...list[index].timeline,
+              { status: list[index].status, timestamp: new Date().toISOString(), note: remarks }
+            ]
+          };
+          localStorage.setItem('localone_applications', JSON.stringify(list));
+          return mapMobileToAdminApp(list[index]);
+        }
+      }
+    }
+
     const index = applications.findIndex(a => a.id === id);
     if (index === -1) throw new Error('Application not found');
     
@@ -117,18 +230,21 @@ export const api = {
   // Students
   async getStudents(search?: string): Promise<Student[]> {
     await delay(700);
+    const stList = getStudentsList();
     if (search) {
-      return students.filter(s => s.name.toLowerCase().includes(search.toLowerCase()) || s.studentId.toLowerCase().includes(search.toLowerCase()));
+      return stList.filter(s => s.name.toLowerCase().includes(search.toLowerCase()) || s.studentId.toLowerCase().includes(search.toLowerCase()));
     }
-    return students;
+    return stList;
   },
 
   async getStudent(id: string): Promise<{ student: Student; applications: Application[] }> {
     await delay(500);
-    const student = students.find(s => s.id === id);
+    const stList = getStudentsList();
+    const student = stList.find(s => s.id === id);
     if (!student) throw new Error('Student not found');
     
-    const studentApps = applications.filter(a => a.studentId === id);
+    const list = getApplicationsList();
+    const studentApps = list.filter(a => a.studentId === id);
     return { student, applications: studentApps };
   },
 

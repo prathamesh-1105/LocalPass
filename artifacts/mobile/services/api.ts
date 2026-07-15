@@ -152,6 +152,14 @@ export const useApplications = () => {
     queryKey: ['applications'],
     queryFn: async () => {
       await sleep(1000);
+      if (typeof window !== 'undefined') {
+        const stored = localStorage.getItem('localone_applications');
+        if (stored) {
+          return JSON.parse(stored) as Application[];
+        } else {
+          localStorage.setItem('localone_applications', JSON.stringify(MOCK_APPLICATIONS));
+        }
+      }
       return MOCK_APPLICATIONS;
     },
   });
@@ -162,6 +170,14 @@ export const useApplication = (id: string) => {
     queryKey: ['applications', id],
     queryFn: async () => {
       await sleep(800);
+      if (typeof window !== 'undefined') {
+        const stored = localStorage.getItem('localone_applications');
+        if (stored) {
+          const list = JSON.parse(stored) as Application[];
+          const app = list.find(a => a.id === id);
+          if (app) return app;
+        }
+      }
       const app = MOCK_APPLICATIONS.find(a => a.id === id);
       if (!app) throw new Error('Not found');
       return app;
@@ -172,13 +188,14 @@ export const useApplication = (id: string) => {
 
 export const useSubmitApplication = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuthStore();
   
   return useMutation({
     mutationFn: async (data: any) => {
       await sleep(2000);
       const newApp: Application = {
         id: `app${Date.now()}`,
-        userId: 'u1',
+        userId: user?.id || 'u1',
         status: 'Submitted',
         sourceStation: data.sourceStation,
         destinationStation: data.destinationStation,
@@ -189,7 +206,44 @@ export const useSubmitApplication = () => {
           { status: 'Submitted', timestamp: new Date().toISOString() }
         ]
       };
-      MOCK_APPLICATIONS = [newApp, ...MOCK_APPLICATIONS];
+      
+      let currentList = MOCK_APPLICATIONS;
+      if (typeof window !== 'undefined') {
+        const stored = localStorage.getItem('localone_applications');
+        if (stored) {
+          currentList = JSON.parse(stored);
+        }
+        currentList = [newApp, ...currentList];
+        localStorage.setItem('localone_applications', JSON.stringify(currentList));
+        
+        // Push student record to localStorage for the admin portal to reference
+        if (user) {
+          const storedStudents = localStorage.getItem('localone_students');
+          let studentsList = [];
+          if (storedStudents) {
+            studentsList = JSON.parse(storedStudents);
+          }
+          studentsList = studentsList.filter((s: any) => s.id !== user.id);
+          studentsList.push({
+            id: user.id,
+            name: user.name,
+            email: user.collegeEmail || user.email,
+            dob: user.dob,
+            gender: user.gender,
+            contact: user.mobile,
+            address: user.address,
+            college: user.college,
+            department: user.department,
+            year: user.year,
+            semester: user.semester,
+            rollNumber: user.rollNumber || 'N/A',
+            studentId: user.studentId || 'N/A',
+          });
+          localStorage.setItem('localone_students', JSON.stringify(studentsList));
+        }
+      } else {
+        MOCK_APPLICATIONS = [newApp, ...MOCK_APPLICATIONS];
+      }
       return newApp;
     },
     onSuccess: () => {
@@ -204,21 +258,34 @@ export const useResubmitApplication = () => {
   return useMutation({
     mutationFn: async (data: any) => {
       await sleep(1500);
-      const appIndex = MOCK_APPLICATIONS.findIndex(a => a.id === data.id);
+      let currentList = MOCK_APPLICATIONS;
+      if (typeof window !== 'undefined') {
+        const stored = localStorage.getItem('localone_applications');
+        if (stored) {
+          currentList = JSON.parse(stored);
+        }
+      }
+      
+      const appIndex = currentList.findIndex(a => a.id === data.id);
       if (appIndex !== -1) {
-        MOCK_APPLICATIONS[appIndex] = {
-          ...MOCK_APPLICATIONS[appIndex],
+        currentList[appIndex] = {
+          ...currentList[appIndex],
           status: 'Submitted',
           sourceStation: data.sourceStation,
           destinationStation: data.destinationStation,
           travelType: data.travelType,
           updatedAt: new Date().toISOString(),
           timeline: [
-            ...MOCK_APPLICATIONS[appIndex].timeline,
+            ...currentList[appIndex].timeline,
             { status: 'Submitted', timestamp: new Date().toISOString(), note: 'Resubmitted with corrections.' }
           ]
         };
-        return MOCK_APPLICATIONS[appIndex];
+        
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('localone_applications', JSON.stringify(currentList));
+        }
+        MOCK_APPLICATIONS = currentList;
+        return currentList[appIndex];
       }
       throw new Error('Application not found');
     },
