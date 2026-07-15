@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Image, Modal, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Image, Modal, ScrollView, SafeAreaView } from 'react-native';
 import { Screen } from '@/components/Screen';
 import { useAuthStore } from '@/store/authStore';
 import { useColors } from '@/hooks/useColors';
