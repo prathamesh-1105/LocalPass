@@ -22,16 +22,19 @@ RailPass digitizes the student railway concession approval workflow between stud
 
 ## Where things live
 
-- `artifacts/mobile` — Expo/React Native app (RailPass). All screens live under `app/`, design tokens in `constants/colors.ts`, mock data/services in `services/`, Zustand stores in `store/`.
+- `artifacts/mobile` — Expo/React Native app (RailPass), the student-facing app. Screens under `app/`, design tokens in `constants/colors.ts`, mock data/services in `services/`, Zustand stores in `store/`.
+- `artifacts/admin-portal` — React + Vite web app (LocalOne Admin Portal), the college-staff-facing app. Pages in `src/pages`, mock API layer in `src/lib/mock-api/`, Zustand stores in `src/store`, shared UI in `src/components`.
 
 ## Architecture decisions
 
-- RailPass has no backend by design (per spec: "Do NOT build backend, do NOT connect to any API"). All data comes from a mock service layer in `artifacts/mobile/services/` that simulates network latency and returns typed data, meant to be swapped for real APIs later.
-- Local persistence uses AsyncStorage (auth session, applications, documents, theme) instead of the shared Postgres DB.
+- Both RailPass and the LocalOne Admin Portal have no backend by design — data comes from mock service layers (`artifacts/mobile/services/`, `artifacts/admin-portal/src/lib/mock-api/`) that simulate network latency and return typed data, meant to be swapped for real APIs later.
+- RailPass persists locally via AsyncStorage (auth session, applications, documents, theme). The Admin Portal persists session/theme via Zustand + localStorage. Neither uses the shared Postgres DB yet.
+- Admin Portal demo login: username `admin`, password `admin123`.
 
 ## Product
 
-- RailPass: students submit railway concession applications through a multi-step wizard (personal, academic, journey, documents, review), track approval status on an animated timeline, and receive a digital certificate once approved. Colleges' verification/approval steps are represented as status states in the mock data. Also includes notifications, a document vault, help center, an AI assistant UI (canned responses), profile, and settings.
+- RailPass (mobile, student-facing): students submit railway concession applications through a multi-step wizard (personal, academic, journey, documents, review), track approval status on an animated timeline, and receive a digital certificate once approved. Also includes notifications, a document vault, help center, an AI assistant UI (canned responses), profile, and settings.
+- LocalOne Admin Portal (web, college-staff-facing): college admins review, approve/reject, and remark on student concession applications, browse a student directory with application history, view dashboard KPIs/analytics and reports (monthly applications, approval rate), and manage notifications/profile/settings (incl. dark/light mode).
 
 ## User preferences
 
