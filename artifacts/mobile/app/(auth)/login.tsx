@@ -50,47 +50,53 @@ export default function LoginScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setLoading(true);
 
-    // Generate random 6-digit OTP
-    const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
-    
-    // Save in storage for verification
-    await AsyncStorage.setItem('localone_active_otp', generatedOtp);
+    try {
+      // Generate random 6-digit OTP
+      const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      
+      // Save in storage for verification
+      await AsyncStorage.setItem('localone_active_otp', generatedOtp);
 
-    // Send SMS
-    const dispatch = await sendSmsOtp(data.mobile, generatedOtp);
-    setLoading(false);
+      // Send SMS
+      const dispatch = await sendSmsOtp(data.mobile, generatedOtp);
+      setLoading(false);
 
-    if (dispatch.success) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert('OTP Dispatched', 'A verification code has been sent to your phone number.', [
-        {
-          text: 'Verify Now',
-          onPress: () => {
-            router.push({
-              pathname: '/(auth)/otp',
-              params: { mobile: data.mobile }
-            });
-          }
-        }
-      ]);
-    } else {
-      // Demo fallback
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      Alert.alert(
-        'Demo Code Generated',
-        `SMS gateway is offline or not configured.\n\nUse Verification Code: ${generatedOtp}`,
-        [
+      if (dispatch.success) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        Alert.alert('OTP Dispatched', 'A verification code has been sent to your phone number.', [
           {
-            text: 'Proceed',
+            text: 'Verify Now',
             onPress: () => {
               router.push({
                 pathname: '/(auth)/otp',
-                params: { mobile: data.mobile, mockOtp: generatedOtp }
+                params: { mobile: data.mobile }
               });
             }
           }
-        ]
-      );
+        ]);
+      } else {
+        // Demo fallback
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        Alert.alert(
+          'Demo Code Generated',
+          `SMS gateway is offline or not configured.\n\nUse Verification Code: ${generatedOtp}`,
+          [
+            {
+              text: 'Proceed',
+              onPress: () => {
+                router.push({
+                  pathname: '/(auth)/otp',
+                  params: { mobile: data.mobile, mockOtp: generatedOtp }
+                });
+              }
+            }
+          ]
+        );
+      }
+    } catch (error: any) {
+      setLoading(false);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert('System Error', error.message || 'Failed to dispatch OTP. Please try again.');
     }
   };
 

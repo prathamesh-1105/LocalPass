@@ -8,6 +8,35 @@ export interface SmsConfig {
   twilioPhone?: string;
 }
 
+// Pure JS Base64 encoder for environment compatibility
+const encodeBase64 = (str: string): string => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+  let result = '';
+  let i = 0;
+  while (i < str.length) {
+    const char1 = str.charCodeAt(i++);
+    const char2 = i < str.length ? str.charCodeAt(i++) : NaN;
+    const char3 = i < str.length ? str.charCodeAt(i++) : NaN;
+
+    const byte1 = char1 >> 2;
+    const byte2 = ((char1 & 3) << 4) | (isNaN(char2) ? 0 : char2 >> 4);
+    const byte3 = isNaN(char2) ? 64 : ((char2 & 15) << 2) | (isNaN(char3) ? 0 : char3 >> 6);
+    const byte4 = isNaN(char3) ? 64 : char3 & 63;
+
+    result += chars.charAt(byte1) + chars.charAt(byte2) + 
+              (byte3 === 64 ? '=' : chars.charAt(byte3)) + 
+              (byte4 === 64 ? '=' : chars.charAt(byte4));
+  }
+  return result;
+};
+
+// Pure JS Query String serializer
+const encodeQueryString = (params: Record<string, string>): string => {
+  return Object.keys(params)
+    .map(key => encodeURIComponent(key) + '=' + encodeURIComponent(params[key]))
+    .join('&');
+};
+
 export const getSmsConfig = async (): Promise<SmsConfig> => {
   try {
     const data = await AsyncStorage.getItem('localone_sms_config');
@@ -75,7 +104,8 @@ export const sendSmsOtp = async (mobile: string, otp: string): Promise<{ success
     }
 
     try {
-      const credentials = btoa(`${config.twilioSid}:${config.apiKey}`);
+      const rawCreds = `${config.twilioSid}:${config.apiKey}`;
+      const credentials = encodeBase64(rawCreds);
       const toPhone = formattedMobile.startsWith('91') && formattedMobile.length > 10 
         ? `+${formattedMobile}` 
         : `+91${formattedMobile}`;
@@ -88,11 +118,11 @@ export const sendSmsOtp = async (mobile: string, otp: string): Promise<{ success
             'Authorization': `Basic ${credentials}`,
             'Content-Type': 'application/x-www-form-urlencoded',
           },
-          body: new URLSearchParams({
+          body: encodeQueryString({
             Body: `Your LocalOne OTP is: ${otp}. Valid for 5 minutes.`,
             From: config.twilioPhone,
             To: toPhone,
-          }).toString(),
+          }),
         }
       );
 

@@ -83,9 +83,50 @@ export default function OtpScreen() {
 
     verifyOtp.mutate(code, {
       onSuccess: (data) => {
-        // If mobile is the mock user's mobile number, log them in directly
+        // Check if there is an existing student record in localStorage matching this mobile number
+        let isRegistered = false;
+        let registeredUser = null;
+        try {
+          if (typeof window !== 'undefined' && window.localStorage) {
+            const stored = localStorage.getItem('localone_students');
+            if (stored) {
+              const list = JSON.parse(stored);
+              const found = list.find((s: any) => s.contact === mobile || s.mobile === mobile);
+              if (found) {
+                isRegistered = true;
+                registeredUser = found;
+              }
+            }
+          }
+        } catch (e) {
+          console.error(e);
+        }
+
+        // If mobile is the mock user's mobile number, or they already registered previously, log them in directly
         // Otherwise, they are a new user and need to complete registration.
-        if (mobile === '9876543210') {
+        if (mobile === '9876543210' || isRegistered) {
+          if (isRegistered && registeredUser) {
+            setUser({
+              id: registeredUser.id,
+              name: registeredUser.name,
+              email: registeredUser.email || registeredUser.collegeEmail,
+              mobile: registeredUser.contact || registeredUser.mobile || mobile,
+              collegeEmail: registeredUser.collegeEmail || registeredUser.email,
+              collegeEmailVerified: true,
+              avatarUrl: registeredUser.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+              dob: registeredUser.dob || '2004-01-01',
+              gender: registeredUser.gender || 'Male',
+              address: registeredUser.address || 'Mumbai, Maharashtra',
+              college: registeredUser.college,
+              department: registeredUser.department,
+              year: registeredUser.year || '3rd Year',
+              semester: registeredUser.semester || '6th Sem',
+              studentId: registeredUser.studentId,
+              rollNumber: registeredUser.rollNumber,
+              emergencyContactName: 'Guardian',
+              emergencyContactPhone: '9876500000',
+            });
+          }
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           router.replace('/(tabs)');
         } else {
