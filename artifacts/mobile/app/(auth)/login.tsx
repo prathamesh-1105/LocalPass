@@ -24,6 +24,8 @@ export default function LoginScreen() {
   const colors = useColors();
   const [configModalVisible, setConfigModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toastType, setToastType] = useState<'success' | 'warning' | 'error'>('success');
 
   // SMS settings state
   const [smsConfig, setSmsConfig] = useState<SmsConfig>({
@@ -75,17 +77,18 @@ export default function LoginScreen() {
         } catch (e) {
           console.warn('Haptics failed:', e);
         }
-        Alert.alert('OTP Dispatched', 'A verification code has been sent to your phone number.', [
-          {
-            text: 'Verify Now',
-            onPress: () => {
-              router.push({
-                pathname: '/(auth)/otp',
-                params: { mobile: data.mobile }
-              });
-            }
-          }
-        ]);
+        
+        const formattedMobile = data.mobile.startsWith('+') ? data.mobile : `+91 ${data.mobile}`;
+        setToastType('success');
+        setToastMessage(`SMS sent with activation code to ${formattedMobile}`);
+        
+        setTimeout(() => {
+          setToastMessage(null);
+          router.push({
+            pathname: '/(auth)/otp',
+            params: { mobile: data.mobile }
+          });
+        }, 2000);
       } else {
         // Demo fallback
         try {
@@ -93,21 +96,17 @@ export default function LoginScreen() {
         } catch (e) {
           console.warn('Haptics failed:', e);
         }
-        Alert.alert(
-          'Demo Code Generated',
-          `SMS gateway is offline or not configured.\n\nUse Verification Code: ${generatedOtp}`,
-          [
-            {
-              text: 'Proceed',
-              onPress: () => {
-                router.push({
-                  pathname: '/(auth)/otp',
-                  params: { mobile: data.mobile, mockOtp: generatedOtp }
-                });
-              }
-            }
-          ]
-        );
+        
+        setToastType('warning');
+        setToastMessage(`Demo Mode: Use code ${generatedOtp} to proceed.`);
+        
+        setTimeout(() => {
+          setToastMessage(null);
+          router.push({
+            pathname: '/(auth)/otp',
+            params: { mobile: data.mobile, mockOtp: generatedOtp }
+          });
+        }, 3000);
       }
     } catch (error: any) {
       setLoading(false);
@@ -116,7 +115,9 @@ export default function LoginScreen() {
       } catch (e) {
         console.warn('Haptics failed:', e);
       }
-      Alert.alert('System Error', error.message || 'Failed to dispatch OTP. Please try again.');
+      setToastType('error');
+      setToastMessage(error.message || 'Failed to dispatch OTP. Please try again.');
+      setTimeout(() => setToastMessage(null), 4000);
     }
   };
 
@@ -190,6 +191,28 @@ export default function LoginScreen() {
           </Text>
         </Animated.View>
       </KeyboardAwareScrollViewCompat>
+
+      {toastMessage && (
+        <Animated.View 
+          entering={FadeInDown.springify()} 
+          style={[
+            styles.toast, 
+            { 
+              backgroundColor: toastType === 'error' ? colors.destructive : colors.card,
+              borderColor: toastType === 'error' ? 'transparent' : colors.border
+            }
+          ]}
+        >
+          <Feather 
+            name={toastType === 'success' ? 'check-circle' : toastType === 'warning' ? 'alert-triangle' : 'alert-circle'} 
+            size={18} 
+            color={toastType === 'error' ? '#fff' : colors.primary} 
+          />
+          <Text style={[styles.toastText, { color: toastType === 'error' ? '#fff' : colors.foreground }]}>
+            {toastMessage}
+          </Text>
+        </Animated.View>
+      )}
 
       {/* Gateway settings configuration modal */}
       <Modal
@@ -411,5 +434,29 @@ const styles = StyleSheet.create({
   modalFooter: {
     padding: 24,
     borderTopWidth: 1,
+  },
+  toast: {
+    position: 'absolute',
+    bottom: 40,
+    left: 24,
+    right: 24,
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+    zIndex: 1000,
+    gap: 12,
+  },
+  toastText: {
+    fontSize: 14,
+    fontWeight: '500',
+    fontFamily: 'Inter_500Medium',
+    flex: 1,
   },
 });
