@@ -85,9 +85,14 @@ export function Button({
   };
 
   const handlePress = () => {
+    console.log('Button pressed. Title:', title, 'Disabled:', disabled, 'Loading:', loading);
     if (disabled || loading) return;
     if (variant === 'primary' || variant === 'destructive') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      try {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      } catch (e) {
+        console.warn('Haptics failed in Button:', e);
+      }
     }
     onPress();
   };

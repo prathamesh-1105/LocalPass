@@ -46,8 +46,16 @@ export default function LoginScreen() {
     defaultValues: { mobile: '' }
   });
 
+  const onInvalid = (errors: any) => {
+    console.log('Login validation failed:', errors);
+  };
+
   const onSubmit = async (data: LoginFormData) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    } catch (e) {
+      console.warn('Haptics failed in login:', e);
+    }
     setLoading(true);
 
     try {
@@ -62,7 +70,11 @@ export default function LoginScreen() {
       setLoading(false);
 
       if (dispatch.success) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        try {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        } catch (e) {
+          console.warn('Haptics failed:', e);
+        }
         Alert.alert('OTP Dispatched', 'A verification code has been sent to your phone number.', [
           {
             text: 'Verify Now',
@@ -76,7 +88,11 @@ export default function LoginScreen() {
         ]);
       } else {
         // Demo fallback
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        try {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        } catch (e) {
+          console.warn('Haptics failed:', e);
+        }
         Alert.alert(
           'Demo Code Generated',
           `SMS gateway is offline or not configured.\n\nUse Verification Code: ${generatedOtp}`,
@@ -95,7 +111,11 @@ export default function LoginScreen() {
       }
     } catch (error: any) {
       setLoading(false);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      try {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      } catch (e) {
+        console.warn('Haptics failed:', e);
+      }
       Alert.alert('System Error', error.message || 'Failed to dispatch OTP. Please try again.');
     }
   };
@@ -157,7 +177,7 @@ export default function LoginScreen() {
 
           <Button
             title="Send OTP"
-            onPress={handleSubmit(onSubmit)}
+            onPress={handleSubmit(onSubmit, onInvalid)}
             loading={loading}
             style={styles.submitBtn}
           />
