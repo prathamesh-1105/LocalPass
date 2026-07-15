@@ -118,6 +118,12 @@ export default function OtpScreen() {
           <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
             We sent a verification code to {maskedMobile}
           </Text>
+          <View style={{ marginTop: 12, padding: 12, borderRadius: 10, backgroundColor: colors.primary + '08', borderLeftWidth: 3, borderLeftColor: colors.primary, flexDirection: 'row', alignItems: 'center' }}>
+            <Feather name="info" size={16} color={colors.primary} style={{ marginRight: 8 }} />
+            <Text style={{ fontSize: 13, color: colors.primary, fontWeight: '600', flex: 1 }}>
+              Demo Mode: Enter any 6-digit code (e.g., 123456) to verify.
+            </Text>
+          </View>
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.codeContainer}>
