@@ -3,15 +3,15 @@ const fs = require('fs');
 const path = require('path');
 
 const rootDir = path.resolve(__dirname, '..');
-const distDir = path.join(rootDir, 'dist');
+const publicDir = path.join(rootDir, 'public');
 
 console.log('--- Starting Vercel Build Orchestration ---');
 
 try {
-  // 1. Clean root dist directory
-  if (fs.existsSync(distDir)) {
-    console.log('Cleaning existing root dist directory...');
-    fs.rmSync(distDir, { recursive: true, force: true });
+  // 1. Clean root public directory
+  if (fs.existsSync(publicDir)) {
+    console.log('Cleaning existing root public directory...');
+    fs.rmSync(publicDir, { recursive: true, force: true });
   }
 
   // 2. Build Mobile Web App (Expo)
@@ -37,21 +37,21 @@ try {
     stdio: 'inherit',
   });
 
-  // 4. Merge directories into root dist
-  console.log('\n--- Merging builds into root dist directory ---');
-  fs.mkdirSync(distDir, { recursive: true });
+  // 4. Merge directories into root public
+  console.log('\n--- Merging builds into root public directory ---');
+  fs.mkdirSync(publicDir, { recursive: true });
 
   const mobileDist = path.join(mobileDir, 'dist');
   const adminDist = path.join(adminDir, 'dist', 'public');
 
   if (fs.existsSync(mobileDist)) {
-    console.log(`Copying Mobile Web App build from ${mobileDist} to ${distDir}...`);
-    fs.cpSync(mobileDist, distDir, { recursive: true });
+    console.log(`Copying Mobile Web App build from ${mobileDist} to ${publicDir}...`);
+    fs.cpSync(mobileDist, publicDir, { recursive: true });
   } else {
     throw new Error('Mobile Web App build output not found!');
   }
 
-  const adminTargetDir = path.join(distDir, 'admin');
+  const adminTargetDir = path.join(publicDir, 'admin');
   if (fs.existsSync(adminDist)) {
     console.log(`Copying Admin Portal build from ${adminDist} to ${adminTargetDir}...`);
     fs.cpSync(adminDist, adminTargetDir, { recursive: true });
@@ -60,7 +60,7 @@ try {
   }
 
   console.log('\n--- Build Orchestration Completed Successfully! ---');
-  console.log(`Final deployment bundle created at: ${distDir}`);
+  console.log(`Final deployment bundle created at: ${publicDir}`);
 } catch (error) {
   console.error('\nBuild Orchestration Failed:', error);
   process.exit(1);
