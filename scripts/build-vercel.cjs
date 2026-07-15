@@ -7,6 +7,25 @@ const publicDir = path.join(rootDir, 'public');
 
 console.log('--- Starting Vercel Build Orchestration ---');
 
+// Load environment variables from root .env file if it exists
+const envPath = path.join(rootDir, '.env');
+if (fs.existsSync(envPath)) {
+  console.log('Loading environment variables from root .env file...');
+  const envContent = fs.readFileSync(envPath, 'utf-8');
+  envContent.split('\n').forEach(line => {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.startsWith('#') && trimmed.includes('=')) {
+      const parts = trimmed.split('=');
+      const key = parts[0].trim();
+      const val = parts.slice(1).join('=').trim();
+      process.env[key] = val;
+    }
+  });
+}
+
+const supabaseUrl = process.env.SUPABASE_URL || 'https://ktutafvwoyinaqeplfya.supabase.co';
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || '';
+
 try {
   // 1. Clean root public directory
   if (fs.existsSync(publicDir)) {
@@ -17,23 +36,30 @@ try {
   // 2. Build Mobile Web App (Expo)
   console.log('\n--- Building Student Mobile Web App (Expo) ---');
   const mobileDir = path.join(rootDir, 'artifacts', 'mobile');
+  const mobileEnv = {
+    ...process.env,
+    EXPO_PUBLIC_SUPABASE_URL: supabaseUrl,
+    EXPO_PUBLIC_SUPABASE_ANON_KEY: supabaseAnonKey,
+  };
   execSync('npx expo export --platform web', {
     cwd: mobileDir,
+    env: mobileEnv,
     stdio: 'inherit',
   });
 
   // 3. Build Admin Portal (Vite)
   console.log('\n--- Building College Admin Portal (Vite) ---');
   const adminDir = path.join(rootDir, 'artifacts', 'admin-portal');
-  // Pass env variables for PORT and BASE_PATH
-  const env = {
+  const adminEnv = {
     ...process.env,
     PORT: '5000',
     BASE_PATH: '/admin/',
+    VITE_SUPABASE_URL: supabaseUrl,
+    VITE_SUPABASE_ANON_KEY: supabaseAnonKey,
   };
   execSync('npx vite build --config vite.config.ts', {
     cwd: adminDir,
-    env,
+    env: adminEnv,
     stdio: 'inherit',
   });
 

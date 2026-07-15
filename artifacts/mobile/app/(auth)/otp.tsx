@@ -11,6 +11,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { sendSmsOtp } from '@/utils/smsService';
+import { supabase } from '../../utils/supabaseClient';
 
 export default function OtpScreen() {
   const { mobile, mockOtp } = useLocalSearchParams<{ mobile: string; mockOtp?: string }>();
@@ -82,21 +83,22 @@ export default function OtpScreen() {
     }
 
     verifyOtp.mutate(code, {
-      onSuccess: (data) => {
-        // Check if there is an existing student record in localStorage matching this mobile number
+      onSuccess: async (data) => {
+        // Check if there is an existing student record in Supabase matching this mobile number
         let isRegistered = false;
         let registeredUser = null;
         try {
-          if (typeof window !== 'undefined' && window.localStorage) {
-            const stored = localStorage.getItem('localone_students');
-            if (stored) {
-              const list = JSON.parse(stored);
-              const found = list.find((s: any) => s.contact === mobile || s.mobile === mobile);
-              if (found) {
-                isRegistered = true;
-                registeredUser = found;
-              }
-            }
+          const { data: student, error } = await supabase
+            .from('students')
+            .select('*')
+            .eq('mobile', mobile || '9876543210')
+            .maybeSingle();
+
+          if (error) {
+            console.error('Failed to query student from Supabase during OTP verification', error);
+          } else if (student) {
+            isRegistered = true;
+            registeredUser = student;
           }
         } catch (e) {
           console.error(e);
@@ -109,11 +111,11 @@ export default function OtpScreen() {
             setUser({
               id: registeredUser.id,
               name: registeredUser.name,
-              email: registeredUser.email || registeredUser.collegeEmail,
-              mobile: registeredUser.contact || registeredUser.mobile || mobile,
-              collegeEmail: registeredUser.collegeEmail || registeredUser.email,
+              email: registeredUser.email,
+              mobile: registeredUser.mobile || mobile,
+              collegeEmail: registeredUser.email,
               collegeEmailVerified: true,
-              avatarUrl: registeredUser.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+              avatarUrl: registeredUser.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
               dob: registeredUser.dob || '2004-01-01',
               gender: registeredUser.gender || 'Male',
               address: registeredUser.address || 'Mumbai, Maharashtra',
@@ -121,10 +123,10 @@ export default function OtpScreen() {
               department: registeredUser.department,
               year: registeredUser.year || '3rd Year',
               semester: registeredUser.semester || '6th Sem',
-              studentId: registeredUser.studentId,
-              rollNumber: registeredUser.rollNumber,
-              emergencyContactName: 'Guardian',
-              emergencyContactPhone: '9876500000',
+              studentId: registeredUser.student_id,
+              rollNumber: registeredUser.roll_number,
+              emergencyContactName: registeredUser.emergency_contact_name || 'Guardian',
+              emergencyContactPhone: registeredUser.emergency_contact_phone || '9876500000',
             });
           }
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);

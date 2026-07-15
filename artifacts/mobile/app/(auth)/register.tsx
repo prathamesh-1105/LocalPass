@@ -14,6 +14,7 @@ import { Feather } from '@expo/vector-icons';
 import Animated, { FadeIn, SlideInRight, SlideOutLeft } from 'react-native-reanimated';
 import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
+import { supabase } from '../../utils/supabaseClient';
 
 // Constants
 const MUMBAI_COLLEGES = [
@@ -175,40 +176,75 @@ export default function RegisterScreen() {
     else router.replace('/(auth)/login');
   };
 
-  const onSubmit = (data: RegisterFormData) => {
+  const onSubmit = async (data: RegisterFormData) => {
     if (!collegeIdFile || !aadhaarFile || !studentPhotoFile) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       alert('Please upload all required documents.');
       return;
     }
 
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-
-    // Save in Auth store
-    setUser({
-      id: `u-${Date.now()}`,
+    const studentIdStr = `u-${Date.now()}`;
+    const studentData = {
+      id: studentIdStr,
       name: data.name,
-      email: data.collegeEmail,
+      email: data.collegeEmail || null,
       mobile: mobile || '9876543210',
-      collegeEmail: data.collegeEmail,
-      collegeEmailVerified: true,
-      avatarUrl: profilePhoto || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
       dob: data.dob,
       gender: data.gender,
-      address: 'Mumbai, Maharashtra',
       college: data.college,
       department: data.department,
       year: data.year,
       semester: data.semester,
-      studentId: data.studentId,
-      rollNumber: data.rollNumber,
-      emergencyContactName: 'Guardian',
-      emergencyContactPhone: '9876500000',
-    });
-    setToken('mock-registered-token');
+      student_id: data.studentId || null,
+      roll_number: data.rollNumber || null,
+      address: 'Mumbai, Maharashtra',
+      avatar_url: profilePhoto || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+      emergency_contact_name: 'Guardian',
+      emergency_contact_phone: '9876500000',
+    };
 
-    // Route to Dashboard
-    router.replace('/(tabs)');
+    try {
+      const { error } = await supabase
+        .from('students')
+        .insert(studentData);
+
+      if (error) {
+        console.error('Failed to register student to Supabase', error);
+        alert(`Registration database error: ${error.message}`);
+        return;
+      }
+
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+      // Save in Auth store
+      setUser({
+        id: studentIdStr,
+        name: data.name,
+        email: data.collegeEmail,
+        mobile: mobile || '9876543210',
+        collegeEmail: data.collegeEmail,
+        collegeEmailVerified: true,
+        avatarUrl: profilePhoto || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+        dob: data.dob,
+        gender: data.gender,
+        address: 'Mumbai, Maharashtra',
+        college: data.college,
+        department: data.department,
+        year: data.year,
+        semester: data.semester,
+        studentId: data.studentId,
+        rollNumber: data.rollNumber,
+        emergencyContactName: 'Guardian',
+        emergencyContactPhone: '9876500000',
+      });
+      setToken('mock-registered-token');
+
+      // Route to Dashboard
+      router.replace('/(tabs)');
+    } catch (e: any) {
+      console.error(e);
+      alert(`Registration system error: ${e.message || e}`);
+    }
   };
 
   return (

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/authStore';
 import { sleep } from '@/utils';
 import { User, Application, Document, Notification } from '@/types';
+import { supabase } from '../utils/supabaseClient';
 
 // Mock Data
 const MOCK_USER: User = {
@@ -148,20 +149,36 @@ export const useVerifyOtp = () => {
 
 // Data Services
 export const useApplications = () => {
+  const { user } = useAuthStore();
   return useQuery({
     queryKey: ['applications'],
     queryFn: async () => {
-      await sleep(1000);
-      if (typeof window !== 'undefined') {
-        const stored = localStorage.getItem('localone_applications');
-        if (stored) {
-          return JSON.parse(stored) as Application[];
-        } else {
-          localStorage.setItem('localone_applications', JSON.stringify(MOCK_APPLICATIONS));
-        }
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('applications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('submitted_at', { ascending: false });
+
+      if (error) {
+        console.error('Failed to fetch applications from Supabase', error);
+        throw error;
       }
-      return MOCK_APPLICATIONS;
+      
+      return (data || []).map(app => ({
+        id: app.id,
+        userId: app.user_id,
+        status: app.status,
+        sourceStation: app.source_station,
+        destinationStation: app.destination_station,
+        travelType: app.travel_type,
+        submittedAt: app.submitted_at,
+        updatedAt: app.updated_at,
+        rejectionReason: app.rejection_reason,
+        timeline: app.timeline || []
+      })) as Application[];
     },
+    enabled: !!user,
   });
 };
 
@@ -169,18 +186,29 @@ export const useApplication = (id: string) => {
   return useQuery({
     queryKey: ['applications', id],
     queryFn: async () => {
-      await sleep(800);
-      if (typeof window !== 'undefined') {
-        const stored = localStorage.getItem('localone_applications');
-        if (stored) {
-          const list = JSON.parse(stored) as Application[];
-          const app = list.find(a => a.id === id);
-          if (app) return app;
-        }
+      const { data, error } = await supabase
+        .from('applications')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) {
+        console.error(`Failed to fetch application ${id}`, error);
+        throw error;
       }
-      const app = MOCK_APPLICATIONS.find(a => a.id === id);
-      if (!app) throw new Error('Not found');
-      return app;
+
+      return {
+        id: data.id,
+        userId: data.user_id,
+        status: data.status,
+        sourceStation: data.source_station,
+        destinationStation: data.destination_station,
+        travelType: data.travel_type,
+        submittedAt: data.submitted_at,
+        updatedAt: data.updated_at,
+        rejectionReason: data.rejection_reason,
+        timeline: data.timeline || []
+      } as Application;
     },
     enabled: !!id,
   });
@@ -192,59 +220,44 @@ export const useSubmitApplication = () => {
   
   return useMutation({
     mutationFn: async (data: any) => {
-      await sleep(2000);
-      const newApp: Application = {
+      if (!user) throw new Error('Not logged in');
+      
+      const newApp = {
         id: `app${Date.now()}`,
-        userId: user?.id || 'u1',
+        user_id: user.id,
         status: 'Submitted',
-        sourceStation: data.sourceStation,
-        destinationStation: data.destinationStation,
-        travelType: data.travelType,
-        submittedAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        source_station: data.sourceStation,
+        destination_station: data.destinationStation,
+        travel_type: data.travelType,
+        submitted_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         timeline: [
           { status: 'Submitted', timestamp: new Date().toISOString() }
         ]
       };
-      
-      let currentList = MOCK_APPLICATIONS;
-      if (typeof window !== 'undefined') {
-        const stored = localStorage.getItem('localone_applications');
-        if (stored) {
-          currentList = JSON.parse(stored);
-        }
-        currentList = [newApp, ...currentList];
-        localStorage.setItem('localone_applications', JSON.stringify(currentList));
-        
-        // Push student record to localStorage for the admin portal to reference
-        if (user) {
-          const storedStudents = localStorage.getItem('localone_students');
-          let studentsList = [];
-          if (storedStudents) {
-            studentsList = JSON.parse(storedStudents);
-          }
-          studentsList = studentsList.filter((s: any) => s.id !== user.id);
-          studentsList.push({
-            id: user.id,
-            name: user.name,
-            email: user.collegeEmail || user.email,
-            dob: user.dob,
-            gender: user.gender,
-            contact: user.mobile,
-            address: user.address,
-            college: user.college,
-            department: user.department,
-            year: user.year,
-            semester: user.semester,
-            rollNumber: user.rollNumber || 'N/A',
-            studentId: user.studentId || 'N/A',
-          });
-          localStorage.setItem('localone_students', JSON.stringify(studentsList));
-        }
-      } else {
-        MOCK_APPLICATIONS = [newApp, ...MOCK_APPLICATIONS];
+
+      const { data: inserted, error } = await supabase
+        .from('applications')
+        .insert(newApp)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Failed to submit application to Supabase', error);
+        throw error;
       }
-      return newApp;
+
+      return {
+        id: inserted.id,
+        userId: inserted.user_id,
+        status: inserted.status,
+        sourceStation: inserted.source_station,
+        destinationStation: inserted.destination_station,
+        travelType: inserted.travel_type,
+        submittedAt: inserted.submitted_at,
+        updatedAt: inserted.updated_at,
+        timeline: inserted.timeline || []
+      } as Application;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['applications'] });
@@ -257,37 +270,49 @@ export const useResubmitApplication = () => {
   
   return useMutation({
     mutationFn: async (data: any) => {
-      await sleep(1500);
-      let currentList = MOCK_APPLICATIONS;
-      if (typeof window !== 'undefined') {
-        const stored = localStorage.getItem('localone_applications');
-        if (stored) {
-          currentList = JSON.parse(stored);
-        }
-      }
-      
-      const appIndex = currentList.findIndex(a => a.id === data.id);
-      if (appIndex !== -1) {
-        currentList[appIndex] = {
-          ...currentList[appIndex],
+      const { data: currentApp, error: fetchError } = await supabase
+        .from('applications')
+        .select('*')
+        .eq('id', data.id)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      const updatedTimeline = [
+        ...(currentApp.timeline || []),
+        { status: 'Submitted', timestamp: new Date().toISOString(), note: 'Resubmitted with corrections.' }
+      ];
+
+      const { data: updated, error } = await supabase
+        .from('applications')
+        .update({
           status: 'Submitted',
-          sourceStation: data.sourceStation,
-          destinationStation: data.destinationStation,
-          travelType: data.travelType,
-          updatedAt: new Date().toISOString(),
-          timeline: [
-            ...currentList[appIndex].timeline,
-            { status: 'Submitted', timestamp: new Date().toISOString(), note: 'Resubmitted with corrections.' }
-          ]
-        };
-        
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('localone_applications', JSON.stringify(currentList));
-        }
-        MOCK_APPLICATIONS = currentList;
-        return currentList[appIndex];
+          source_station: data.sourceStation,
+          destination_station: data.destinationStation,
+          travel_type: data.travelType,
+          updated_at: new Date().toISOString(),
+          timeline: updatedTimeline
+        })
+        .eq('id', data.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Failed to resubmit application to Supabase', error);
+        throw error;
       }
-      throw new Error('Application not found');
+
+      return {
+        id: updated.id,
+        userId: updated.user_id,
+        status: updated.status,
+        sourceStation: updated.source_station,
+        destinationStation: updated.destination_station,
+        travelType: updated.travel_type,
+        submittedAt: updated.submitted_at,
+        updatedAt: updated.updated_at,
+        timeline: updated.timeline || []
+      } as Application;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['applications'] });
