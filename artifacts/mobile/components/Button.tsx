@@ -7,6 +7,7 @@ import {
   ViewStyle,
   TextStyle,
   View,
+  Platform,
 } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import * as Haptics from 'expo-haptics';
@@ -106,8 +107,10 @@ export function Button({
   const paddingHorizontal = size === 'sm' ? 16 : size === 'lg' ? 24 : size === 'icon' ? 0 : 20;
   const width = size === 'icon' ? 48 : fullWidth ? '100%' : undefined;
 
+  const Clickable = Platform.OS === 'web' ? Pressable : AnimatedPressable;
+
   return (
-    <AnimatedPressable
+    <Clickable
       onPress={handlePress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
@@ -123,6 +126,7 @@ export function Button({
           width,
         },
         style,
+        Platform.OS === 'web' ? null : animatedStyle,
       ]}
       disabled={disabled || loading}
     >
@@ -145,7 +149,7 @@ export function Button({
           )}
         </View>
       )}
-    </AnimatedPressable>
+    </Clickable>
   );
 }
 
