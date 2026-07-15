@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Image, Modal, ScrollView, SafeAreaView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Pressable, Image, Modal, ScrollView } from 'react-native';
 import { Screen } from '@/components/Screen';
 import { useAuthStore } from '@/store/authStore';
 import { useColors } from '@/hooks/useColors';
@@ -7,7 +7,6 @@ import { Button } from '@/components/Button';
 import { Input } from '@/components/Input';
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
 
@@ -17,11 +16,23 @@ export default function ProfileScreen() {
 
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editForm, setEditForm] = useState({
-    mobile: user?.mobile || '',
-    address: user?.address || '',
-    emergencyContactName: user?.emergencyContactName || '',
-    emergencyContactPhone: user?.emergencyContactPhone || '',
+    mobile: '',
+    address: '',
+    emergencyContactName: '',
+    emergencyContactPhone: '',
   });
+
+  // Sync edit form when user data loads
+  useEffect(() => {
+    if (user) {
+      setEditForm({
+        mobile: user.mobile || '',
+        address: user.address || '',
+        emergencyContactName: user.emergencyContactName || '',
+        emergencyContactPhone: user.emergencyContactPhone || '',
+      });
+    }
+  }, [user]);
 
   const handleLogout = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -77,15 +88,15 @@ export default function ProfileScreen() {
     if (!user) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setEditForm({
-      mobile: user.mobile,
-      address: user.address,
-      emergencyContactName: user.emergencyContactName,
-      emergencyContactPhone: user.emergencyContactPhone,
+      mobile: user.mobile || '',
+      address: user.address || '',
+      emergencyContactName: user.emergencyContactName || '',
+      emergencyContactPhone: user.emergencyContactPhone || '',
     });
     setEditModalVisible(true);
   };
 
-  if (!user) return null;
+  const avatarInitial = user?.name ? user.name.charAt(0).toUpperCase() : 'S';
 
   return (
     <Screen scrollable safeAreaEdges={['top']} style={{ backgroundColor: colors.background }}>
@@ -96,12 +107,12 @@ export default function ProfileScreen() {
       {/* Main Profile Info */}
       <View style={styles.profileCard}>
         <Pressable style={styles.avatarWrapper} onPress={pickAvatar}>
-          {user.avatarUrl ? (
+          {user?.avatarUrl ? (
             <Image source={{ uri: user.avatarUrl }} style={styles.avatarImage} />
           ) : (
             <View style={[styles.avatar, { backgroundColor: colors.primary + '18' }]}>
               <Text style={[styles.avatarText, { color: colors.primary }]}>
-                {user.name.charAt(0)}
+                {avatarInitial}
               </Text>
             </View>
           )}
@@ -110,8 +121,8 @@ export default function ProfileScreen() {
           </View>
         </Pressable>
 
-        <Text style={[styles.name, { color: colors.foreground }]}>{user.name}</Text>
-        <Text style={[styles.email, { color: colors.mutedForeground }]}>{user.collegeEmail}</Text>
+        <Text style={[styles.name, { color: colors.foreground }]}>{user?.name || 'Student'}</Text>
+        <Text style={[styles.email, { color: colors.mutedForeground }]}>{user?.collegeEmail || user?.email || 'N/A'}</Text>
         <View style={[styles.badge, { backgroundColor: colors.success + '15' }]}>
           <Feather name="check-circle" size={14} color={colors.success} style={{ marginRight: 6 }} />
           <Text style={[styles.badgeText, { color: colors.success }]}>VERIFIED STUDENT</Text>
@@ -122,10 +133,10 @@ export default function ProfileScreen() {
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Academic Details</Text>
         <View style={[styles.infoCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <InfoRow icon="book" label="College" value={user.college} />
-          <InfoRow icon="award" label="Department" value={user.department} />
-          <InfoRow icon="hash" label="Student ID / Roll No" value={`${user.studentId} / Roll No. ${user.rollNumber}`} />
-          <InfoRow icon="calendar" label="Academic Year" value={`${user.year} (${user.semester})`} hideBorder />
+          <InfoRow icon="book" label="College" value={user?.college || 'N/A'} />
+          <InfoRow icon="award" label="Department" value={user?.department || 'N/A'} />
+          <InfoRow icon="hash" label="Student ID / Roll No" value={`${user?.studentId || 'N/A'} / Roll No. ${user?.rollNumber || 'N/A'}`} />
+          <InfoRow icon="calendar" label="Academic Year" value={`${user?.year || 'N/A'} (${user?.semester || 'N/A'})`} hideBorder />
         </View>
       </View>
 
@@ -140,12 +151,12 @@ export default function ProfileScreen() {
           </Pressable>
         </View>
         <View style={[styles.infoCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <InfoRow icon="phone" label="Mobile" value={`+91 ${user.mobile}`} />
-          <InfoRow icon="map-pin" label="Address" value={user.address || 'Not Added'} />
+          <InfoRow icon="phone" label="Mobile" value={user?.mobile ? `+91 ${user.mobile}` : 'N/A'} />
+          <InfoRow icon="map-pin" label="Address" value={user?.address || 'Not Added'} />
           <InfoRow 
             icon="heart" 
             label="Emergency Contact" 
-            value={user.emergencyContactName ? `${user.emergencyContactName} (${user.emergencyContactPhone})` : 'Not Added'} 
+            value={user?.emergencyContactName ? `${user.emergencyContactName} (${user.emergencyContactPhone || ''})` : 'Not Added'} 
             hideBorder 
           />
         </View>
@@ -178,7 +189,7 @@ export default function ProfileScreen() {
         presentationStyle="pageSheet"
         onRequestClose={() => setEditModalVisible(false)}
       >
-        <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.background }]}>
+        <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
           <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
             <Pressable onPress={() => setEditModalVisible(false)} style={styles.closeBtn}>
               <Feather name="x" size={24} color={colors.foreground} />
@@ -234,7 +245,7 @@ export default function ProfileScreen() {
           <View style={[styles.modalFooter, { borderTopColor: colors.border }]}>
             <Button title="Save Details" onPress={handleSaveProfile} />
           </View>
-        </SafeAreaView>
+        </View>
       </Modal>
     </Screen>
   );
