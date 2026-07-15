@@ -1,9 +1,27 @@
 import { Stack } from 'expo-router';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useColors } from '@/hooks/useColors';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 export default function AppLayout() {
   const colors = useColors();
 
+  return (
+    <QueryClientProvider client={queryClient}>
+      <RootStack colors={colors} />
+    </QueryClientProvider>
+  );
+}
+
+function RootStack({ colors }: { colors: ReturnType<typeof useColors> }) {
   return (
     <Stack
       screenOptions={{
