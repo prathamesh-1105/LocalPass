@@ -1,0 +1,514 @@
+You are a team of senior Product Designers, Senior React Native Engineers, UX Researchers, Mobile Architects, and Design Engineers.
+
+Your task is to build a production-quality Android mobile application called "RailPass".
+
+This is NOT a railway ticket booking app.
+
+This application digitizes the ENTIRE student railway concession approval workflow between Students and Colleges.
+
+The goal is to eliminate paperwork and make concession applications completely digital.
+
+The application should look like it belongs to Google, Apple or Uber.
+
+DO NOT make it look like a student project.
+
+-------------------------------------------------
+TECH STACK
+-------------------------------------------------
+
+Use:
+
+React Native
+Expo
+TypeScript
+
+Use file-based architecture.
+
+Use reusable components.
+
+Use modern folder structure.
+
+Use React Navigation.
+
+Use React Query.
+
+Use Zustand for state management.
+
+Use React Hook Form.
+
+Use Material Design 3.
+
+Support Light Mode and Dark Mode.
+
+Responsive on every Android screen size.
+
+Use beautiful animations.
+
+Micro interactions everywhere.
+
+Skeleton loading.
+
+Shimmer loading.
+
+Pull to refresh.
+
+Bottom sheets.
+
+Floating action buttons.
+
+Premium cards.
+
+Rounded UI.
+
+Modern gradients.
+
+Excellent typography.
+
+-------------------------------------------------
+APP PURPOSE
+-------------------------------------------------
+
+LocalOne is a digital platform where students apply for Railway Student Concession.
+
+Instead of paper forms:
+
+Student submits application digitally.
+
+College verifies digitally.
+
+College approves digitally.
+
+Digital concession certificate is generated.
+
+Student tracks everything inside the app.
+
+Future versions can integrate with Indian Railways.
+
+DO NOT implement Railway APIs.
+
+Use placeholder services.
+
+-------------------------------------------------
+AUTHENTICATION
+-------------------------------------------------
+
+Create complete authentication flow.
+
+Splash Screen
+
+Onboarding
+
+Login
+
+Signup
+
+OTP Verification
+
+Forgot Password
+
+Create Password
+
+Biometric Login placeholder
+
+Face Verification placeholder
+
+College Email Verification
+
+Student ID Verification placeholder
+
+-------------------------------------------------
+HOME DASHBOARD
+-------------------------------------------------
+
+Premium dashboard.
+
+Greeting
+
+Student profile
+
+Application Status Card
+
+Pending Applications
+
+Quick Actions
+
+Apply for Concession
+
+Renew
+
+Documents
+
+Notifications
+
+Certificates
+
+AI Assistant
+
+Help
+
+FAQ
+
+Emergency Contacts
+
+Recent Activity
+
+Animated cards
+
+-------------------------------------------------
+APPLY FOR CONCESSION
+-------------------------------------------------
+
+Multi-step application flow.
+
+Step 1
+
+Personal Details
+
+Name
+
+DOB
+
+Gender
+
+Address
+
+Mobile
+
+Email
+
+Profile Photo placeholder
+
+---------------------------------
+
+Step 2
+
+Academic Details
+
+College
+
+Department
+
+Year
+
+Semester
+
+Student ID
+
+Roll Number
+
+---------------------------------
+
+Step 3
+
+Journey Details
+
+Source Station
+
+Destination Station
+
+Travel Type
+
+Monthly
+
+Quarterly
+
+Half Yearly
+
+Yearly
+
+---------------------------------
+
+Step 4
+
+Upload Documents
+
+College ID
+
+Bonafide Certificate
+
+Passport Photo
+
+Proof of Address
+
+Use upload placeholders.
+
+---------------------------------
+
+Step 5
+
+Review
+
+Editable summary
+
+Terms & Conditions
+
+Submit
+
+Animated Success Screen
+
+-------------------------------------------------
+APPLICATION STATUS
+-------------------------------------------------
+
+Beautiful timeline.
+
+Submitted
+
+Under Review
+
+College Verification
+
+Approved
+
+Rejected
+
+Completed
+
+Each stage should animate.
+
+-------------------------------------------------
+DIGITAL CERTIFICATE
+-------------------------------------------------
+
+Beautiful certificate screen.
+
+Student Photo
+
+College
+
+Certificate Number
+
+Application Number
+
+QR placeholder
+
+Approval Date
+
+Validity
+
+Download PDF placeholder
+
+Share placeholder
+
+-------------------------------------------------
+NOTIFICATIONS
+-------------------------------------------------
+
+Grouped notifications.
+
+Application submitted
+
+College approved
+
+Document rejected
+
+Renewal reminder
+
+Announcements
+
+-------------------------------------------------
+PROFILE
+-------------------------------------------------
+
+Edit profile
+
+Student details
+
+Academic details
+
+Emergency contacts
+
+Documents
+
+Settings
+
+Logout
+
+-------------------------------------------------
+DOCUMENT VAULT
+-------------------------------------------------
+
+Store uploaded documents.
+
+College ID
+
+Bonafide
+
+Certificates
+
+Profile Photo
+
+Search
+
+Categories
+
+Preview screen
+
+-------------------------------------------------
+HELP CENTER
+-------------------------------------------------
+
+FAQs
+
+Contact College
+
+Raise Ticket
+
+Chat placeholder
+
+Email placeholder
+
+-------------------------------------------------
+AI ASSISTANT
+-------------------------------------------------
+
+Modern chat interface.
+
+Suggested Questions.
+
+Examples:
+
+How do I apply?
+
+What documents are required?
+
+How long does approval take?
+
+How do I renew?
+
+This is UI only.
+
+-------------------------------------------------
+SETTINGS
+-------------------------------------------------
+
+Theme
+
+Language
+
+Notification Settings
+
+Biometric Login
+
+Privacy
+
+Security
+
+About
+
+-------------------------------------------------
+SEARCH
+-------------------------------------------------
+
+Global search.
+
+Search applications.
+
+Certificates.
+
+Notifications.
+
+Documents.
+
+-------------------------------------------------
+EMPTY STATES
+-------------------------------------------------
+
+Create professional empty states.
+
+No Applications
+
+No Notifications
+
+No Internet
+
+Loading
+
+Error
+
+-------------------------------------------------
+ANIMATIONS
+-------------------------------------------------
+
+Use smooth animations everywhere.
+
+Page transitions
+
+Button interactions
+
+Card animations
+
+Fade
+
+Slide
+
+Hero transitions
+
+Pull animations
+
+-------------------------------------------------
+DESIGN SYSTEM
+-------------------------------------------------
+
+Create a complete design system.
+
+Spacing
+
+Typography
+
+Colors
+
+Elevation
+
+Icons
+
+Buttons
+
+Inputs
+
+Cards
+
+Dialogs
+
+Bottom Sheets
+
+Snackbars
+
+-------------------------------------------------
+CODE QUALITY
+-------------------------------------------------
+
+Write enterprise-level code.
+
+Do not hardcode values inside screens.
+
+Create service layer.
+
+Create models.
+
+Create types.
+
+Create reusable hooks.
+
+Create reusable components.
+
+Create constants.
+
+Use clean architecture.
+
+Everything must be modular.
+
+-------------------------------------------------
+IMPORTANT
+
+Do NOT build backend.
+
+Do NOT connect to any API.
+
+Use mock services.
+
+Every API call should already be abstracted so a backend can be connected later.
+
+The application should feel like a startup-ready MVP that could be presented to investors, colleges, and government officials.
+
+Generate the COMPLETE project with proper folder structure, navigation, reusable components, and production-quality UI.

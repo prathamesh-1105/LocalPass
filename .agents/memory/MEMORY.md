@@ -1,0 +1,1 @@
+- [Design subagent package gaps](expo-design-subagent-deps.md) — Expo design subagent can import packages (react-hook-form, zustand) it never added to package.json; always verify deps after a first build before trusting it bundled clean.

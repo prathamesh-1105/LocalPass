@@ -1,6 +1,6 @@
-# [Project name]
+# RailPass
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+RailPass digitizes the student railway concession approval workflow between students and colleges, replacing paper forms with a fully digital apply → review → approve → certificate flow.
 
 ## Run & Operate
 
@@ -22,15 +22,16 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/mobile` — Expo/React Native app (RailPass). All screens live under `app/`, design tokens in `constants/colors.ts`, mock data/services in `services/`, Zustand stores in `store/`.
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- RailPass has no backend by design (per spec: "Do NOT build backend, do NOT connect to any API"). All data comes from a mock service layer in `artifacts/mobile/services/` that simulates network latency and returns typed data, meant to be swapped for real APIs later.
+- Local persistence uses AsyncStorage (auth session, applications, documents, theme) instead of the shared Postgres DB.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- RailPass: students submit railway concession applications through a multi-step wizard (personal, academic, journey, documents, review), track approval status on an animated timeline, and receive a digital certificate once approved. Colleges' verification/approval steps are represented as status states in the mock data. Also includes notifications, a document vault, help center, an AI assistant UI (canned responses), profile, and settings.
 
 ## User preferences
 
