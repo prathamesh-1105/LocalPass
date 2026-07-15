@@ -41,6 +41,7 @@ function RootStack({ colors }: { colors: ReturnType<typeof useColors> }) {
       <Stack.Screen name="certificate/[id]" options={{ title: 'Digital Certificate', presentation: 'modal' }} />
       <Stack.Screen name="search" options={{ headerShown: false, presentation: 'modal' }} />
       <Stack.Screen name="help" options={{ title: 'Help Center' }} />
+      <Stack.Screen name="documents" options={{ title: 'Document Vault' }} />
       <Stack.Screen name="settings" options={{ title: 'Settings' }} />
     </Stack>
   );

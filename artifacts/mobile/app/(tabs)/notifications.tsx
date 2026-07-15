@@ -29,10 +29,28 @@ export default function NotificationsScreen() {
     }
   };
 
+  const [localNotifications, setLocalNotifications] = React.useState(notifications || []);
+
+  React.useEffect(() => {
+    if (notifications) {
+      setLocalNotifications(notifications);
+    }
+  }, [notifications]);
+
+  const handleMarkAllRead = () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setLocalNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+  };
+
   return (
     <Screen safeAreaEdges={['top']}>
-      <View style={styles.header}>
+      <View style={[styles.header, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>Notifications</Text>
+        {localNotifications.some((n) => !n.isRead) && (
+          <Pressable onPress={handleMarkAllRead} style={{ padding: 8 }}>
+            <Text style={{ color: colors.primary, fontWeight: '600', fontSize: 14 }}>Mark all read</Text>
+          </Pressable>
+        )}
       </View>
 
       {isLoading ? (
@@ -48,7 +66,7 @@ export default function NotificationsScreen() {
             </View>
           ))}
         </View>
-      ) : notifications?.length === 0 ? (
+      ) : localNotifications.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Feather name="bell-off" size={48} color={colors.mutedForeground} style={{ marginBottom: 16 }} />
           <Text style={[styles.emptyTitle, { color: colors.foreground }]}>All caught up</Text>
@@ -58,7 +76,7 @@ export default function NotificationsScreen() {
         </View>
       ) : (
         <FlatList
-          data={notifications}
+          data={localNotifications}
           keyExtractor={item => item.id}
           refreshing={isLoading}
           onRefresh={refetch}
@@ -71,6 +89,16 @@ export default function NotificationsScreen() {
                   !item.isRead && { backgroundColor: colors.primary + '08' },
                   pressed && { opacity: 0.7 }
                 ]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  // Mark single notification as read locally
+                  setLocalNotifications((prev) =>
+                    prev.map((n) => (n.id === item.id ? { ...n, isRead: true } : n))
+                  );
+                  if (item.actionUrl) {
+                    router.push(item.actionUrl as any);
+                  }
+                }}
               >
                 <View style={[styles.iconWrap, { backgroundColor: getColorForCategory(item.category) + '15' }]}>
                   <Feather name={getIconForCategory(item.category)} size={20} color={getColorForCategory(item.category)} />

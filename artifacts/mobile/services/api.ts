@@ -8,21 +8,21 @@ const MOCK_USER: User = {
   id: 'u1',
   name: 'Alex Johnson',
   email: 'alex@example.com',
-  mobile: '+1234567890',
-  collegeEmail: 'alex.j@university.edu',
+  mobile: '9876543210',
+  collegeEmail: 'alex.j@vjti.ac.in',
   collegeEmailVerified: true,
   avatarUrl: null,
-  dob: '2001-05-14',
+  dob: '2004-05-14',
   gender: 'Male',
   address: '123 Campus Drive, City',
-  college: 'State University',
+  college: 'Veermata Jijabai Technological Institute (VJTI)',
   department: 'Computer Science',
   year: '3rd Year',
   semester: '6th Sem',
   studentId: 'CS2021001',
   rollNumber: '42',
   emergencyContactName: 'Sarah Johnson',
-  emergencyContactPhone: '+1987654321',
+  emergencyContactPhone: '9876500000',
 };
 
 let MOCK_APPLICATIONS: Application[] = [
@@ -30,31 +30,33 @@ let MOCK_APPLICATIONS: Application[] = [
     id: 'app1',
     userId: 'u1',
     status: 'Approved',
-    sourceStation: 'City Center',
-    destinationStation: 'University Station',
-    travelType: 'Quarterly',
-    submittedAt: '2023-08-01T10:00:00Z',
-    updatedAt: '2023-08-05T14:30:00Z',
+    sourceStation: 'Ghatkopar',
+    destinationStation: 'Dadar',
+    travelType: 'Second Class - Quarterly',
+    submittedAt: '2026-07-01T10:00:00Z',
+    updatedAt: '2026-07-05T14:30:00Z',
     certificateId: 'cert1',
     timeline: [
-      { status: 'Submitted', timestamp: '2023-08-01T10:00:00Z' },
-      { status: 'Under Review', timestamp: '2023-08-02T09:15:00Z' },
-      { status: 'College Verification', timestamp: '2023-08-03T11:20:00Z' },
-      { status: 'Approved', timestamp: '2023-08-05T14:30:00Z', note: 'All details verified.' },
+      { status: 'Submitted', timestamp: '2026-07-01T10:00:00Z' },
+      { status: 'Under Review', timestamp: '2026-07-02T09:15:00Z' },
+      { status: 'College Verification', timestamp: '2026-07-03T11:20:00Z' },
+      { status: 'Approved', timestamp: '2026-07-05T14:30:00Z', note: 'All details verified.' },
     ],
   },
   {
     id: 'app2',
     userId: 'u1',
-    status: 'Under Review',
-    sourceStation: 'City Center',
-    destinationStation: 'University Station',
-    travelType: 'Half-Yearly',
-    submittedAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    status: 'Rejected',
+    sourceStation: 'Kalyan',
+    destinationStation: 'Kurla',
+    travelType: 'First Class - Monthly',
+    submittedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+    updatedAt: new Date(Date.now() - 86400000).toISOString(),
+    rejectionReason: 'The uploaded Bonafide Certificate does not contain a signature from the Principal. Please upload a signed copy.',
     timeline: [
-      { status: 'Submitted', timestamp: new Date(Date.now() - 86400000).toISOString() },
-      { status: 'Under Review', timestamp: new Date().toISOString() },
+      { status: 'Submitted', timestamp: new Date(Date.now() - 86400000 * 2).toISOString() },
+      { status: 'Under Review', timestamp: new Date(Date.now() - 86400000 * 1.5).toISOString() },
+      { status: 'Rejected', timestamp: new Date(Date.now() - 86400000).toISOString(), note: 'Bonafide Certificate signature is missing.' }
     ],
   }
 ];
@@ -63,12 +65,12 @@ let MOCK_NOTIFICATIONS: Notification[] = [
   {
     id: 'n1',
     userId: 'u1',
-    title: 'Application Approved',
-    message: 'Your concession application #app1 has been approved. You can now download your digital certificate.',
+    title: 'Application Rejected',
+    message: 'Your concession application #app2 was rejected by the college. Reason: Bonafide Certificate signature is missing.',
     category: 'Application',
     isRead: false,
     createdAt: new Date().toISOString(),
-    actionUrl: '/application/app1',
+    actionUrl: '/application/app2',
   },
   {
     id: 'n2',
@@ -88,15 +90,15 @@ let MOCK_DOCUMENTS: Document[] = [
     type: 'College ID',
     name: 'college_id_front.jpg',
     url: 'https://example.com/mock-doc1',
-    uploadedAt: '2023-08-01T09:50:00Z',
+    uploadedAt: '2026-07-01T09:50:00Z',
   },
   {
     id: 'doc2',
     userId: 'u1',
     type: 'Bonafide',
-    name: 'bonafide_cert_2023.pdf',
+    name: 'bonafide_cert_2026.pdf',
     url: 'https://example.com/mock-doc2',
-    uploadedAt: '2023-08-01T09:52:00Z',
+    uploadedAt: '2026-07-01T09:52:00Z',
   }
 ];
 
@@ -192,6 +194,37 @@ export const useSubmitApplication = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['applications'] });
+    }
+  });
+};
+
+export const useResubmitApplication = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (data: any) => {
+      await sleep(1500);
+      const appIndex = MOCK_APPLICATIONS.findIndex(a => a.id === data.id);
+      if (appIndex !== -1) {
+        MOCK_APPLICATIONS[appIndex] = {
+          ...MOCK_APPLICATIONS[appIndex],
+          status: 'Submitted',
+          sourceStation: data.sourceStation,
+          destinationStation: data.destinationStation,
+          travelType: data.travelType,
+          updatedAt: new Date().toISOString(),
+          timeline: [
+            ...MOCK_APPLICATIONS[appIndex].timeline,
+            { status: 'Submitted', timestamp: new Date().toISOString(), note: 'Resubmitted with corrections.' }
+          ]
+        };
+        return MOCK_APPLICATIONS[appIndex];
+      }
+      throw new Error('Application not found');
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['applications'] });
+      queryClient.invalidateQueries({ queryKey: ['applications', data.id] });
     }
   });
 };
